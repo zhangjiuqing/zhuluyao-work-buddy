@@ -966,8 +966,8 @@ RENDER.mood=function(){
   Object.keys(MOODS).forEach(k=>{
     const on=DB.mood[t]===k;
     h+='<div data-md="'+k+'" style="cursor:pointer;text-align:center;padding:6px 5px;border:2px solid '+(on?'var(--gold)':'var(--wood-light)')+
-       ';border-radius:5px;background:'+(on?'#fff3d4':'#fffdf5')+';box-shadow:0 1px 0 rgba(92,58,30,.22)">'+
-       '<div style="width:94px;height:94px;margin:0 auto 2px">'+moodImg(k,94)+'</div>'+
+       ';border-radius:5px;background:'+(on?'#fff3d4':'#fffdf5')+';box-shadow:0 1px 0 rgba(92,58,30,.22);overflow:hidden">'+
+       '<div style="width:86px;height:86px;margin:0 auto 2px">'+moodImg(k,86)+'</div>'+
        '<div style="font-size:11.5px;font-weight:700">'+MOODS[k].emo+' '+MOODS[k].label+'</div></div>';
   });
   h+='</div></div>';
