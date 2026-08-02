@@ -1,0 +1,5 @@
+# 构建临时文件，不纳入仓库
+_check.js
+_haley_b64.txt
+_icon_b64.txt
+_mkicon.py
