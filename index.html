@@ -464,7 +464,12 @@ const ICONS = {
   '................','................','..nnnnnnnnnnnn..','.noooooooooooon.',
   '.noooooooooooon.','.nnnnnnnnnnnnnn.','.noooooyyoooooon','.noooooyyooooooo',
   '.noooooyyoooooon','.nnnnnnnnnnnnnn.','.noooooooooooon.','.noooooooooooon.',
-  '.noooooooooooon.','..nnnnnnnnnnnn..','................','................']}
+  '.noooooooooooon.','..nnnnnnnnnnnn..','................','................']},
+  cup:{pal:P,rows:[
+  '.......y........','.......y........','.....cccccc.....','....c......c....',
+  '....c.oooo.c....','....c.oooo.c....','....c.oooo.c....','....c.oooo.c....',
+  '....c.oooo.c....','....c.oooo.c....','....c.oooo.c....','....ccoooocc....',
+  '.....cccccc.....','......cccc......','.......cc.......','................']}
 };
 function ico(name,cls){ return ICONS[name]?svgIcon(ICONS[name],cls):''; }
 
@@ -546,6 +551,7 @@ const DEFAULT_MODULES=[
   ]},
   {id:'life',name:'生活专区',icon:'house',on:true,children:[
     {id:'food',  name:'美食',    icon:'egg',on:true},
+    {id:'drink', name:'饮料记录',icon:'cup',on:true},
     {id:'movie', name:'影视登记',icon:'tv', on:true}
   ]}
 ];
@@ -560,6 +566,7 @@ function blankDB(){
     sports:[],       // {id,date,type,min,note}
     weights:[],      // {date,kg}
     foods:[],        // {id,date,name,place,imgs[],auds[],mood,note}
+    drinks:[],       // {id,date,name,type[],note,ts}
     movies:[]        // {id,title,type,date,rate,review,poster}
   };
 }
@@ -584,7 +591,7 @@ function migrate(d){
   out.cfg.modules.forEach(m=>{
     if(m.children) m.children=m.children.filter(c=>c.id!=='travel');
   });
-  ['memos','sports','weights','foods','movies','presets'].forEach(k=>{ if(!Array.isArray(out[k])) out[k]=b[k]; });
+  ['memos','sports','weights','foods','drinks','movies','presets'].forEach(k=>{ if(!Array.isArray(out[k])) out[k]=b[k]; });
   if(!out.tasks||typeof out.tasks!=='object') out.tasks={};
   if(!out.mood||typeof out.mood!=='object') out.mood={};
   if(!out.cfg.folded||typeof out.cfg.folded!=='object') out.cfg.folded={};
@@ -1295,6 +1302,67 @@ function foodEdit(f){
       d.place=$('#fP',mo).value.trim(); d.note=$('#fX',mo).value; d.date=$('#fD',mo).value||today();
       if(isNew) DB.foods.push(d); else DB.foods[DB.foods.findIndex(x=>x.id===d.id)]=d;
       save(); closeModal(); RENDER.food(); toast('已保存 ✅');
+    };
+  });
+}
+
+/* ==================================================================
+   ⑤ 饮料记录
+   ================================================================== */
+const DRINK_TYPE=['水','茶','咖啡','奶茶','果汁','汽水','牛奶','酒','其他'];
+RENDER.drink=function(){
+  let h='<div class="card"><div class="card-t">'+ico('cup','ico')+'饮料记录'+
+    '<button class="btn pri" id="dAdd" style="margin-left:auto">＋ 记一杯</button></div>'+
+    '<div class="muted">按日期记录今天喝了什么，养成喝水好习惯 💧</div></div>';
+  const byDate={};
+  DB.drinks.slice().sort((a,b)=>b.ts-a.ts).forEach(x=>{ (byDate[x.date]=byDate[x.date]||[]).push(x); });
+  const dates=Object.keys(byDate).sort().reverse();
+  if(!dates.length) h+='<div class="card"><div class="empty"><span class="big">🥤</span>还没有饮料记录，今天喝了点什么？</div></div>';
+  dates.forEach((d,i)=>{
+    h+='<div class="fold'+(i===0?' open':'')+'"><div class="fold-h">📅 '+dLabel(d)+'<span class="chip" style="margin-left:6px">'+byDate[d].length+' 杯</span><span class="ar">▶</span></div><div class="fold-b"><div class="grid g2">';
+    byDate[d].forEach(x=>{
+      h+='<div class="card" style="margin:0;box-shadow:none">';
+      h+='<div class="row" style="align-items:flex-start"><b style="font-size:14.5px;flex:1">🥤 '+esc(x.name)+'</b>'+
+         '<button class="btn mini" data-de="'+x.id+'">编辑</button><button class="del" data-dx="'+x.id+'">×</button></div>';
+      if(x.type&&x.type.length) h+='<div class="row" style="gap:5px;margin-top:4px;flex-wrap:wrap">'+x.type.map(t=>'<span class="chip">'+esc(t)+'</span>').join('')+'</div>';
+      if(x.note) h+='<div style="margin-top:6px;white-space:pre-wrap;font-size:13px">'+esc(x.note)+'</div>';
+      h+='</div>';
+    });
+    h+='</div></div></div>';
+  });
+  $('#content').innerHTML=h+decoHTML();
+  bindFolds();
+  $('#dAdd').onclick=()=>drinkEdit(null);
+  $$('[data-de]').forEach(b=>b.onclick=()=>drinkEdit(DB.drinks.find(x=>x.id===b.dataset.de)));
+  $$('[data-dx]').forEach(b=>b.onclick=()=>{
+    const x=DB.drinks.find(z=>z.id===b.dataset.dx);
+    confirmBox('删除记录','确定删除「'+esc(x.name)+'」？',()=>{
+      DB.drinks=DB.drinks.filter(z=>z.id!==b.dataset.dx); save(); RENDER.drink(); toast('已删除');
+    });
+  });
+};
+function drinkEdit(x){
+  const isNew=!x;
+  const d=x?JSON.parse(JSON.stringify(x)):{id:uid(),date:today(),name:'',type:[],note:'',ts:Date.now()};
+  modal('<h3>🥤 '+(isNew?'记一杯饮料':'编辑饮料')+'</h3>'+
+    '<div class="row" style="margin-bottom:8px"><input class="inp grow" id="dN" placeholder="喝了什么，比如「冰美式」" value="'+esc(d.name)+'" maxlength="30">'+
+    '<input class="inp" id="dD" type="date" value="'+d.date+'" style="width:150px"></div>'+
+    '<div class="muted" style="margin-bottom:5px">类型（可多选）</div>'+
+    '<div class="row" style="gap:6px;margin-bottom:8px;flex-wrap:wrap">'+DRINK_TYPE.map(t=>'<button class="tagbtn'+(d.type.includes(t)?' on':'')+'" data-dt="'+esc(t)+'">'+t+'</button>').join('')+'</div>'+
+    '<textarea class="ta" id="dX" placeholder="备注：甜度、温度、搭配、感受…" style="min-height:60px">'+esc(d.note)+'</textarea>'+
+    '<div class="foot"><button class="btn" id="dC">取消</button><button class="btn pri" id="dS">保存</button></div>',
+  mo=>{
+    $$('[data-dt]',mo).forEach(b=>b.onclick=()=>{
+      const t=b.dataset.dt;
+      if(d.type.includes(t)) d.type=d.type.filter(z=>z!==t); else d.type.push(t);
+      $$('[data-dt]',mo).forEach(z=>z.classList.toggle('on',d.type.includes(z.dataset.dt)));
+    });
+    $('#dC',mo).onclick=closeModal;
+    $('#dS',mo).onclick=()=>{
+      d.name=$('#dN',mo).value.trim()||'一杯饮料';
+      d.note=$('#dX',mo).value; d.date=$('#dD',mo).value||today();
+      if(isNew) DB.drinks.push(d); else DB.drinks[DB.drinks.findIndex(z=>z.id===d.id)]=d;
+      save(); closeModal(); RENDER.drink(); toast('已保存 💧');
     };
   });
 }
