@@ -937,36 +937,15 @@ const MP={ '.':null,k:'#3a2412',S:'#f7cfa8',C:'#dba57c',w:'#ffffff',p:'#f28fa8',
   E:'#6fc6e8',e:'#3f9dc4',   /* 艾米丽 蓝发 */
   N:'#e08a4a',n:'#b8622c',   /* 潘妮 红发 */
   m:'#c94a63' };
-/* 表情核心 5 行，每行严格 10 列（脸部区域） */
-const FACE={
-  happy:['SSSSSSSSSS','SSkkSSkkSS','pSSSSSSSSp','SSkwwwwkSS','SSSkkkkSSS'],
-  calm :['SSSSSSSSSS','SSkkSSkkSS','SSSSSSSSSS','SSSkkkkSSS','SSSSSSSSSS'],
-  sad  :['SkSSSSSSkS','SSkkSSkkSS','SSbSSSSbSS','SSSkkkkSSS','SSkSSSSkSS']
-};
-function faceRows(H,h,kind){
-  const wrap=x=>'.'+h+H+x+H+h+'.';          /* 1+1+1+10+1+1+1 = 16 */
-  const R=[];
-  R.push('....'+H.repeat(8)+'....');
-  R.push('..'+H.repeat(12)+'..');
-  R.push('.'+h+H.repeat(12)+h+'.');
-  R.push('.'+h+H.repeat(12)+h+'.');
-  R.push('.'+h+H+H+'SSSSSSSS'+H+H+h+'.');
-  R.push(wrap('SSSSSSSSSS'));
-  FACE[kind].forEach(x=>R.push(wrap(x)));
-  R.push(wrap('SSSSSSSSSS'));
-  R.push('..'+h+'SSSSSSSSSS'+h+'..');
-  R.push('...'+h+h+'SSSSSS'+h+h+'...');
-  R.push('....'+h.repeat(8)+'....');
-  return R;
-}
+/* ═══ 暹罗猫心情图标（像素猫 + 头顶气泡） ═══ */
 const MOODS={
-  happy:{label:'开心',emo:'☀',rows:faceRows('H','h','happy'),tip:'今天心情不错！'},
-  calm :{label:'平静',emo:'☁',rows:faceRows('E','e','calm'), tip:'平平淡淡才是真'},
-  sad  :{label:'难过',emo:'☂',rows:faceRows('N','n','sad'),  tip:'难过也没关系呀'}
+  happy:{label:'开心',emo:'😊',img:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAApCAYAAABQgPsBAAAFVElEQVR4nOVXe2iWVRj/nXPed9vXnNmFioFIbX80l3PfEKw/ErcpEQ5UIro4I0iIkjZz0y2hMtTUNe8mISFd0EBIjCJz4MToIpS2FrGQeUtpeBluU/S7vOc8cc77XfddfN/ZBeqB7/ve85xznuf3PvcP+C9RWdmDdKsymB9F/f19vhWUl1eY35Mnf8uri/0dym8VlCEN4J+gvO4s8wFiypTpnnhewfBUEPBK+w+jt/doBtvw9h/2LCZVbwKIL5pXO7a9PJQA4imARlFV1cN5114orpdlM1W/j0xJVZ7NXfkyKPXl/5L0LY+lZZxy3cmXvtZNTcbYv1vQ/NDojBtLvI0ta/63dOD9tzKK3Pd71mTwXpr/iOdi+MW2JeTbNaJQZLmQ6X5O3j3MqCArP6+EAieSLgQ21S9aA86Q9lYEJw0WYyynhQg3/ANRYlw6gylYNkdtdZkrM34uaSWaXfMAKE/OOFTkH8hwKJq2tgWHYAp3TChBffVkjLMY3cZB3/Rdhv6dMa0Sd40rgWXlLE/gdrF/IIWFgbR1VCpwzkGMw+E3cF0SIoxBwkKEAZYTBgRAUuWUGQpf8w9EIJzBc6ISRXBw5PhppgjMkcRqKu6GI8G6e/oZ54BSuYEU2zIrP7cNASjpZk1q8DGusLu710TBc/VVRLAwcP4Snqmrpk+6e9ieQz/pPX2eOLdioFQyiJx0d8cpf94p9z4RMSICkWS7t601vIV1QTL7pHUqkLDw/MxgHDDTPQpKpoFwNYoxAGGuaxgTFD9KykFjXZDKV/9oZA5cGYFCAQQclK3+AQvrphow2og6llKzy11w/0CsWPRrS3Dm+j2qkiXt/OA1cGYh7BAuXNY1R0HGJBpDwdxJs4iCnV1X6uLAByvJJkLUEoC6E33nz6Lrw1VkE/BEUwfe3fAGnTh3EUOhCIZ7PkeI2eCKIC0GGXEw1HMQV8MMe9/roBdXrIKUEns3LicSDJwEHEfh59Nn8NXOlWQJhlkvvOmtS3ftWjeqQnK6fXyAnq0P0mPBMppdU26C8tGah6g+ttZu48hdWfdtaiHfWSMy+oJin+58m2Y93RJfm+8L1yI4ceKkp5fjQvqPkQgf1ReYoHmLXgcz8WKywXyClZPMrpdBS8gxABlNTHcVbmXoswP3wCtZduEYSrxVkhRgygmxXVtW6Ye0c6HQxcSzEKZOMN2h2agubc6Gs1fdtFfreHkWObIQRcLGdWljYHAQE+8txrFTQzj66zlUTyrA1WghTv0xjAWPB7G36zs0NMzBt91fY3BkCAvmzMCerl5MLbVx7OwIdGWdVnk/pk+0YfMAFLPQd2YAFZPug2QhLNtx0FvWfBmb0JpbV+iCRo21VTR3xrTEvOEWOmByhZs9sWvUOLNSTwLmXFNLW5pVPtvS7n9Ci1rFWNLSTkRugPFYVmrXNNZWJwSSntAsYGFtpQuQc92EE5QKhlPqEOUxfW3bhmNKNdC0vA1bO9Zjwng3bi5dGdIV10xrJmYc4OJQyOx93P0LWlvaEeZ6NNRAkx4QPDuQvBaxQyPY3rmeWbpuS+CVpcsx/6knY9axofva4lfbEYX7LBkz80rz0jbzLGJZvnXD2gQSlRm/N7cIxWaHLRvXstZlr1GUAKkEmlvbsa1zvdljpKCk7szAoeOn0LyszbT+TZ1J5akUzm6Q/EAiTnJC63zHFbzvox10pPd3NLW2GoWkCKWlpWhoaDBNUjoSWzd15MyGosAE/0DsLH8nAgGC1KWd6XGEwG1CQVEhBASiXEHcpLiO5Bje8gJhkcxbJdEr2N6Z/saL506nzZvXeaoJxc5wVv6fEOgM7JNMYcQAAAAASUVORK5CYII=',tip:'今天心情不错！'},
+  calm :{label:'平静',emo:'🎵',img:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAApCAYAAABQgPsBAAAFXElEQVR4nOVXfWhVZRj/ve97zu5uc2YfVAxE6u4P53LuDsH6I3GbEuHAJKIPZwQJUdJmbrolVIaauua3SUhIH2ggJESROXBg9CGUthaxEOdHSsOP4TZF78d53yfOe+7dvefec+/uuUZ/1APbOe/n8zvPx+95LvBfklBoOt3uHcyPotOnB3wrqKys0s/BwT8K0uWpPBSaTl4yc+Ycz/mJ1pN3Fgwgn0wEotB9eQGFJgDhpSjXsxDxBJPPFbkkU6kfEJmu4rgN6e8/nnfsR8aBFBvVNTWPuJ5+JafekE/3FOOSpFvS9bJ/gjsqE1yRlFxn8nGKkevywcRmxti/QmjFsV2GZJq5mHi7raz5/8nhD9/JYr4fD2zImntl8aMFV9+vdq0g364RAeFxINv9nAr3MKMSz/m8N5RYMfclMKlx2QZwBtdXESwXLMZYTgsRbvkHosQk9wRTMEyO+tqQc2dyX8pKtKDuIVCenLGo1D+Q0UjcNTYFh2AKd00pR2PtDEwyGN3BQd8NXIX9nDu7GvdMKodh5KQncLPMP5BAIOgax6UC5xzEOCx+CzclIcYYJAzEGGBYUUAAJFXOOyPRG/6BCESz5qy4RCksHDt5likCsySxuqp7YUmw3r7TjHNAqdxAykzpOZ/bhgCUdLImPfgYV9jf26+j4IXGGiIYGLp4Bc811NJnvX3swNFf7DV7P3FuJECpVBBZbncnJX/eKec8ETEiApFk+3dt1HNLG8Kk18nWqUDCwIvzwknAzK5RUNIFwtEoigDCHNcwJii5lZSF5oYwVa7/Wd85dG0MCiUQsBBa/xOWNszSYGwj2rGUnl3OgPsHYiSi37YEZ47f4ypFaReHb4AzA1GLcOmqzTkKMnGjNhT0GZdFFExvXemDwx+tJZMIcUMA6m4MXDyPno/XkUnAUy1deH/LW3TqwmWMRGIY7fsSEWaCK4I0GGTMwkjfEVyPMhz8oIteXrMOUkoc3LqaSDBwErAshV/PnsM3e9eSIRjmv/R2YVW6Z9+mDIbkdOfkID3fGKbHwyFaUFepg/KxuoepMTG23caRm1kPbWsj31kjsuqCYp/vfZfmP9uWHOv/l27EcOrUYEEfx4X0HyMxnlEXmKAnl70JpuNFZ4P+C1dP06uFNFpCFgEkU5hdVbiRpc8M3odCxTADRVC8UZ66QNMJsX071tkvrn2RyOXxdyE0TzC7QrOMKq33Rr1Z1/VpXa/OJ0sGUCpM3JQmhoaHMfX+Mpw4M4Ljv19A7bQSXI8HcOavUSx5IoyDPT+gqWkhvu/9FsNjI1iycC4O9PRjVoWJE+fHYDPr7OoHMWeqCZMHoZiBgXNDqJr2ACSLYNWeI4VlzdeJDq21fY1NaNRcX0OL5s4e7zccogNmVDnZkzhGzfOq7U5A72tp63BZ5Ysdnf47tLhRhhVtnUTkBBhPZKXtmub62vELye7QDGBpfbUDkHO7CI9LOhhO6U1UgelrmiYsTdVAy+oO7OzajCmTnbi5cm3EZlzdremYsYDLIxG99mnvb2hv60SU262hDTTlAcG9geS1iBkZw+7uzcyweVsCr61cjcXPPJ2wjgm7ri1/vRNxOO+SMd2vtK7s0O8ikeU7t2wcR6Ky43dii1Cid9ixdSNrX/UGxQmQSqC1vRO7ujfrNUYKStqVGTh68gxaV3Xo0r+tO6U8XaLeBskPJGalOrTu95yLD32yh471/4mW9natkBShoqICTU1NukhKS2Lntq6c2VAanOIfiOnxcyIYJEib2pndjhC4SSgpDUBAIM4VxATkOpajecsLhMWyT5XHr2F3t/uLly+aQ9u3byqIE8qsUc/5vwFnnQh34KrxhgAAAABJRU5ErkJggg==', tip:'平平淡淡才是真'},
+  sad  :{label:'难过',emo:'💧',img:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACIAAAApCAYAAABQgPsBAAAFTUlEQVR4nOVXe2iVZRj/ve/7fTs7zZldqBiI1NkfzeXcGYL1R+I2JcKBSUQXZwQJUdJmbrolVJaauubdJCSkCyoIGVFkDhwYXYTS1iIW4rykNLwMtyl6Lt/7PvG+3zk7O1fPd9YF6oFzznt9nt/73A/wX6JA4H4aLw/mRdDJk32eBZSXV5jf/v7fcspif4fw8YIypAH8E5TTnAGPIKZNm5lx7a1P+woHoxcDHoBkA+GF4jK1fI4Cqbf3aF5r+ZIVH2gHChQQhlVVD44LSFbHDYzDPF5Mk/rovyR8y2NhGadsd3KF76hpUqk/dpgx9u8mNC+Uqua8ElYKFRw1/086+P6baeH8/d61aWsvLngo77D/YvtS8mwa4RMZLqSbn1P+FmZUlHE9J4ciJ5LMBDbVL14LzpD0KoKTBIsxllVDhBvegSgxIXmBKVg2R211wOUZP5fQEs2tuQ+UI2YcKvYOZDgUTZrbgkMwhdsmlaK+eiomWIxu4aBv+i5D/86aUYk7JpTCsrKmJ3C7xDsQn8+fNI9KBc45iHE4/AauS0KEMUhYiDDAcsKAAEiqrDxD4WvegQiE09acqEQxHBw5fpopAnMksZqKO+FIsO6ek4xzQKnsQEpsmXE9uw4BKOlGzVjnY1xhT3ev8YJn66uIYGHg/CU8XVdN+7p72N7DP+k9fZ44t2KgVMKJnGRzxyl33Cn3PhExIgKRZHu2rzNri+qCZPZJy1QgYeG52cE4YKZrFJRMAuFKFAUAYa5pGBMUP0rKQWNdkMrX/Gh4DlwZgUIRBBwE1vyARXXTDRitRO1LY6PLnXDvQKyY92tNcObaPaoSKe384DVwZiHsEC5c1jlHQcY4GkXB3EnSiIKdWdbYycEPVpFNhKglAHU7+s6fRdeHq8km4PGmDry78XU6ce4ihkIRDPd8jhCzwRVBWgwy4mCo5xCuhhn2v9dBL6xcDSkl9m9aQSQYOAk4jsLPp8/gq12ryBIMc55/I78q3bV7fUqG5HTrRD89Ux+kR4IBmltTbpzy4ZoHqD4212bjyJ5ZD2xuIc9RI9LqgmKf7Hqb5jzVEp+b7wvXIjhxoj+vx3EhvftIhKfUBSboscWvgRl/MdFgPsHKKWY3n0ZLyAKApBLTVYVbafJs/13IlyzbV0CKt0oTDEw6IbZ762o9SDoXCl0cHQth8gTTFZqlVGlzNpw56yY9reOlOeRIH4qFjevSxsDgICbfXYJjp4Zw9NdzqJ5ShKtRH079MYyFjwaxv+s7NDTMw7fdX2NwZAgL583C3q5eTC+zcezsCHRmnVF5L2ZOtmFzPxSz0HdmABVT7oFkISzfeSi/qPky1qE1t67UCY0aa6to/qwZo/2Gm+iAqRVu9MSuUePsSt0JmHNNLW1JWvlsa7v3Di1qlWBpSzsRuQ7GY1GpTdNYWz3KkHSHZgGLaitdgJzrIjxKY8FwGttE5Rm+tm3DMakaaFrRhm0dGzBpous3l64M6YxrujXjMw5wcShk9j7u/gWtLe0Ic90aaqAJCwieGUhOjdihEezo3MAsnbcl8PKyFVjw5BMx7djQdW3JK+2Iwh1Lxky/0ryszYxFLMq3bVw3ikSl++/NNUKx3mHrpnWsdfmrFCVAKoHm1nZs79xg9hgpKKkrM3D4+Ck0L28zpX9zZ0L4WApnVkhuIBEn0aF1vuMyPvDRTjrS+zuaWluNQFKEsrIyNDQ0mCIpHYltmzuyRkOxf5J3IHaGvxN+P0Hq1M50O0LgNqGo2AcBgShXEDdJriNZmrecQFgk/VZp9Ap2dCa/eMn8mbRly/q8ckKJM5xx/U++ZcxvpJQ1JAAAAABJRU5ErkJggg==',  tip:'难过也没关系呀'}
 };
-function moodSVG(k,size){
+function moodImg(k,size){
   const m=MOODS[k]; if(!m) return '';
-  return '<svg viewBox="0 0 16 '+m.rows.length+'" shape-rendering="crispEdges" style="width:'+size+'px;height:'+size+'px;display:block">'+drawPx(m.rows,MP)+'</svg>';
+  return '<img src="'+m.img+'" alt="'+m.label+'" style="width:'+size+'px;height:auto;display:block;image-rendering:pixelated" title="'+m.tip+'">';
 }
 let calCur=null;
 RENDER.mood=function(){
@@ -985,7 +964,7 @@ RENDER.mood=function(){
     const on=DB.mood[t]===k;
     h+='<div data-md="'+k+'" style="cursor:pointer;text-align:center;padding:7px 11px;border:3px solid '+(on?'var(--gold)':'var(--wood-light)')+
        ';border-radius:6px;background:'+(on?'#fff3d4':'#fffdf5')+';box-shadow:0 2px 0 rgba(92,58,30,.25)">'+
-       '<div style="width:46px;height:46px;margin:0 auto 4px">'+moodSVG(k,46)+'</div>'+
+       '<div style="width:46px;height:46px;margin:0 auto 4px">'+moodImg(k,46)+'</div>'+
        '<div style="font-size:12px;font-weight:700">'+MOODS[k].emo+' '+MOODS[k].label+'</div></div>';
   });
   h+='</div></div>';
@@ -999,7 +978,7 @@ RENDER.mood=function(){
     h+='<div data-day="'+ds+'" style="cursor:pointer;min-height:62px;border:2px solid '+(isT?'var(--gold)':'var(--wood-light)')+
        ';border-radius:5px;background:'+(isT?'#fff6dd':'#fffdf5')+';padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;position:relative">'+
        '<div style="font-size:10.5px;font-weight:800;color:'+(isT?'var(--red)':'var(--ink-soft)')+'">'+d+'</div>'+
-       (mk?'<div style="width:30px;height:30px">'+moodSVG(mk,30)+'</div>':'<div style="width:30px;height:30px;opacity:.16;display:flex;align-items:center;justify-content:center;font-size:17px">✿</div>')+
+       (mk?'<div style="width:30px;height:30px">'+moodImg(mk,30)+'</div>':'<div style="width:30px;height:30px;opacity:.16;display:flex;align-items:center;justify-content:center;font-size:17px">✿</div>')+
        (cc.t?'<div style="font-size:9.5px;font-weight:700;color:'+(cc.d===cc.t?'var(--green-dark)':'var(--ink-soft)')+'">'+cc.d+'/'+cc.t+'</div>':'')+
        '</div>';
   }
@@ -1031,7 +1010,7 @@ function dayDetail(ds){
   h+='<span style="font-weight:700">当日心情：</span>';
   Object.keys(MOODS).forEach(k=>{
     h+='<div data-dm="'+k+'" style="cursor:pointer;padding:4px;border:2px solid '+(mk===k?'var(--gold)':'transparent')+';border-radius:5px;background:'+(mk===k?'#fff3d4':'transparent')+'">'+
-       '<div style="width:34px;height:34px">'+moodSVG(k,34)+'</div></div>';
+       '<div style="width:34px;height:34px">'+moodImg(k,34)+'</div></div>';
   });
   h+='</div></div>';
   h+='<div style="font-weight:800;margin:10px 0 6px">✅ 当天完成的事（'+list.filter(x=>x.done).length+'/'+list.length+'）</div>';
