@@ -948,7 +948,7 @@ const MOODS={
 };
 function moodImg(k,size){
   const m=MOODS[k]; if(!m) return '';
-  return '<img src="'+m.img+'" alt="'+m.label+'" style="width:'+size+'px;height:auto;display:block;image-rendering:pixelated" title="'+m.tip+'">';
+  return '<img src="'+m.img+'" alt="'+m.label+'" style="width:100%;height:auto;display:block;image-rendering:pixelated;max-width:'+size+'px" title="'+m.tip+'">';
 }
 let calCur=null;
 RENDER.mood=function(){
@@ -962,12 +962,12 @@ RENDER.mood=function(){
      '<button class="btn mini" id="mPrev">‹</button><b style="font-size:14px">'+y+' 年 '+(mo+1)+' 月</b><button class="btn mini" id="mNext">›</button>'+
      '<button class="btn mini" id="mToday">回到本月</button></span></div>';
   /* 选择今日心情 */
-  h+='<div class="px-in" style="padding:10px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px">今天（'+dLabel(t)+'）心情是——</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;justify-items:center;max-width:300px;margin:0 auto">';
+  h+='<div class="px-in" style="padding:10px;margin-bottom:12px"><div style="font-weight:700;margin-bottom:8px">今天（'+dLabel(t)+'）心情是——</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;justify-items:center;max-width:310px;margin:0 auto">';
   Object.keys(MOODS).forEach(k=>{
     const on=DB.mood[t]===k;
-    h+='<div data-md="'+k+'" style="cursor:pointer;text-align:center;padding:6px 8px;border:2px solid '+(on?'var(--gold)':'var(--wood-light)')+
+    h+='<div data-md="'+k+'" style="cursor:pointer;text-align:center;padding:6px 5px;border:2px solid '+(on?'var(--gold)':'var(--wood-light)')+
        ';border-radius:5px;background:'+(on?'#fff3d4':'#fffdf5')+';box-shadow:0 1px 0 rgba(92,58,30,.22)">'+
-       '<div style="width:64px;height:64px;margin:0 auto 2px">'+moodImg(k,64)+'</div>'+
+       '<div style="width:74px;height:74px;margin:0 auto 2px">'+moodImg(k,74)+'</div>'+
        '<div style="font-size:11.5px;font-weight:700">'+MOODS[k].emo+' '+MOODS[k].label+'</div></div>';
   });
   h+='</div></div>';
@@ -978,10 +978,10 @@ RENDER.mood=function(){
   for(let d=1;d<=days;d++){
     const ds=y+'-'+pad(mo+1)+'-'+pad(d);
     const mk=DB.mood[ds], cc=doneCount(ds), isT=ds===t;
-    h+='<div data-day="'+ds+'" style="cursor:pointer;min-height:54px;border:2px solid '+(isT?'var(--gold)':'var(--wood-light)')+
+    h+='<div data-day="'+ds+'" style="cursor:pointer;min-height:58px;border:2px solid '+(isT?'var(--gold)':'var(--wood-light)')+
        ';border-radius:5px;background:'+(isT?'#fff6dd':'#fffdf5')+';padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;position:relative">'+
        '<div style="font-size:10.5px;font-weight:800;color:'+(isT?'var(--red)':'var(--ink-soft)')+'">'+d+'</div>'+
-       (mk?'<div style="width:38px;height:38px">'+moodImg(mk,38)+'</div>':'<div style="width:38px;height:38px;opacity:.16;display:flex;align-items:center;justify-content:center;font-size:20px">✿</div>')+
+       (mk?'<div style="width:44px;height:44px">'+moodImg(mk,44)+'</div>':'<div style="width:44px;height:44px;opacity:.16;display:flex;align-items:center;justify-content:center;font-size:20px">✿</div>')+
        (cc.t?'<div style="font-size:9.5px;font-weight:700;color:'+(cc.d===cc.t?'var(--green-dark)':'var(--ink-soft)')+'">'+cc.d+'/'+cc.t+'</div>':'')+
        '</div>';
   }
@@ -1013,7 +1013,7 @@ function dayDetail(ds){
   h+='<span style="font-weight:700">当日心情：</span>';
   Object.keys(MOODS).forEach(k=>{
     h+='<div data-dm="'+k+'" style="cursor:pointer;padding:3px;border:2px solid '+(mk===k?'var(--gold)':'transparent')+';border-radius:5px;background:'+(mk===k?'#fff3d4':'transparent')+'">'+
-       '<div style="width:44px;height:44px">'+moodImg(k,44)+'</div></div>';
+       '<div style="width:50px;height:50px">'+moodImg(k,50)+'</div></div>';
   });
   h+='</div></div>';
   h+='<div style="font-weight:800;margin:10px 0 6px">✅ 当天完成的事（'+list.filter(x=>x.done).length+'/'+list.length+'）</div>';
