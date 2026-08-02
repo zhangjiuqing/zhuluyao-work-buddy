@@ -970,7 +970,7 @@ RENDER.mood=function(){
     const on=DB.mood[t]===k;
     h+='<div data-md="'+k+'" style="cursor:pointer;text-align:center;padding:7px 11px;border:3px solid '+(on?'var(--gold)':'var(--wood-light)')+
        ';border-radius:6px;background:'+(on?'#fff3d4':'#fffdf5')+';box-shadow:0 2px 0 rgba(92,58,30,.25)">'+
-       '<div style="width:64px;height:64px;margin:0 auto 4px">'+moodImg(k,64)+'</div>'+
+       '<div style="width:85px;height:85px;margin:0 auto 4px">'+moodImg(k,85)+'</div>'+
        '<div style="font-size:12px;font-weight:700">'+MOODS[k].emo+' '+MOODS[k].label+'</div></div>';
   });
   h+='</div></div>';
@@ -984,7 +984,7 @@ RENDER.mood=function(){
     h+='<div data-day="'+ds+'" style="cursor:pointer;min-height:62px;border:2px solid '+(isT?'var(--gold)':'var(--wood-light)')+
        ';border-radius:5px;background:'+(isT?'#fff6dd':'#fffdf5')+';padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;position:relative">'+
        '<div style="font-size:10.5px;font-weight:800;color:'+(isT?'var(--red)':'var(--ink-soft)')+'">'+d+'</div>'+
-       (mk?'<div style="width:30px;height:30px">'+moodImg(mk,30)+'</div>':'<div style="width:30px;height:30px;opacity:.16;display:flex;align-items:center;justify-content:center;font-size:17px">✿</div>')+
+       (mk?'<div style="width:48px;height:48px">'+moodImg(mk,48)+'</div>':'<div style="width:48px;height:48px;opacity:.16;display:flex;align-items:center;justify-content:center;font-size:22px">✿</div>')+
        (cc.t?'<div style="font-size:9.5px;font-weight:700;color:'+(cc.d===cc.t?'var(--green-dark)':'var(--ink-soft)')+'">'+cc.d+'/'+cc.t+'</div>':'')+
        '</div>';
   }
@@ -1016,7 +1016,7 @@ function dayDetail(ds){
   h+='<span style="font-weight:700">当日心情：</span>';
   Object.keys(MOODS).forEach(k=>{
     h+='<div data-dm="'+k+'" style="cursor:pointer;padding:4px;border:2px solid '+(mk===k?'var(--gold)':'transparent')+';border-radius:5px;background:'+(mk===k?'#fff3d4':'transparent')+'">'+
-       '<div style="width:34px;height:34px">'+moodImg(k,34)+'</div></div>';
+       '<div style="width:54px;height:54px">'+moodImg(k,54)+'</div></div>';
   });
   h+='</div></div>';
   h+='<div style="font-weight:800;margin:10px 0 6px">✅ 当天完成的事（'+list.filter(x=>x.done).length+'/'+list.length+'）</div>';
