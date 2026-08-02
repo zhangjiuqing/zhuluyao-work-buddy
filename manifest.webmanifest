@@ -1,0 +1,19 @@
+{
+  "name": "۶•͈⚇•͈ა宝工作台",
+  "short_name": "宝工作台",
+  "description": "个人生活管理工作台（支持离线使用）",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e9d9b6",
+  "theme_color": "#8b5a2b",
+  "icons": [
+    {
+      "src": "./icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
