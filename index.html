@@ -979,16 +979,16 @@ RENDER.mood=function(){
   });
   h+='</div></div>';
   /* 月历 */
-  h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">';
+  h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;width:100%;overflow:hidden">';
   WK.forEach(w=>h+='<div style="text-align:center;font-size:11.5px;font-weight:800;color:var(--ink-soft);padding:3px 0">'+w+'</div>');
   for(let i=0;i<start;i++) h+='<div></div>';
   for(let d=1;d<=days;d++){
     const ds=y+'-'+pad(mo+1)+'-'+pad(d);
     const mk=DB.mood[ds], cc=doneCount(ds), isT=ds===t;
-    h+='<div data-day="'+ds+'" style="cursor:pointer;min-height:66px;border:2px solid '+(isT?'var(--gold)':'var(--wood-light)')+
-       ';border-radius:5px;background:'+(isT?'#fff6dd':'#fffdf5')+';padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;position:relative">'+
+    h+='<div data-day="'+ds+'" style="cursor:pointer;min-height:72px;border:2px solid '+(isT?'var(--gold)':'var(--wood-light)')+
+       ';border-radius:5px;background:'+(isT?'#fff6dd':'#fffdf5')+';padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;position:relative;overflow:hidden">'+
        '<div style="font-size:10.5px;font-weight:800;color:'+(isT?'var(--red)':'var(--ink-soft)')+'">'+d+'</div>'+
-       (mk?'<div style="width:48px;height:48px">'+moodImg(mk,48)+'</div>':'<div style="width:48px;height:48px;opacity:.16;display:flex;align-items:center;justify-content:center;font-size:20px">✿</div>')+
+       (mk?'<div style="width:54px;height:54px">'+moodImg(mk,54)+'</div>':'<div style="width:54px;height:54px;opacity:.16;display:flex;align-items:center;justify-content:center;font-size:22px">✿</div>')+
        (cc.t?'<div style="font-size:9.5px;font-weight:700;color:'+(cc.d===cc.t?'var(--green-dark)':'var(--ink-soft)')+'">'+cc.d+'/'+cc.t+'</div>':'')+
        '</div>';
   }
@@ -1311,27 +1311,131 @@ function foodEdit(f){
    ================================================================== */
 const DRINK_TYPE=['水','茶','咖啡','奶茶','果汁','汽水','牛奶','酒','其他'];
 RENDER.drink=function(){
-  let h='<div class="card"><div class="card-t">'+ico('cup','ico')+'饮料记录'+
+  const t=today();
+  let dCal={y:(new Date()).getFullYear(),m:(new Date()).getMonth()};
+  const DRINK_ICON='🥤';
+  function drinkCal(){
+    const y=dCal.y, mo=dCal.m;
+    const first=new Date(y,mo,1), start=first.getDay(), days=new Date(y,mo+1,0).getDate();
+    let h='';
+    h+='<div class="card"><div class="card-t">'+ico('cup','ico')+'饮料月历'+
+       '<span style="margin-left:auto;display:flex;align-items:center;gap:7px">'+
+       '<button class="btn mini" id="dcPrev">‹</button><b style="font-size:14px">'+y+' 年 '+(mo+1)+' 月</b><button class="btn mini" id="dcNext">›</button>'+
+       '<button class="btn mini" id="dcToday">本月</button></span></div>';
+    /* 月历格子 */
+    h+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;width:100%;overflow:hidden">';
+    WK.forEach(w=>h+='<div style="text-align:center;font-size:11px;font-weight:800;color:var(--ink-soft);padding:2px 0">'+w+'</div>');
+    for(let i=0;i<start;i++) h+='<div></div>';
+    let monthTotal=0;
+    for(let d=1;d<=days;d++){
+      const ds=y+'-'+pad(mo+1)+'-'+pad(d);
+      const drinks=DB.drinks.filter(x=>x.date===ds);
+      const cnt=drinks.length;
+      monthTotal+=cnt;
+      const isT=ds===t;
+      /* 格子内显示杯数或图标 */
+      let inner='<div style="font-size:10.5px;font-weight:800;color:'+(isT?'var(--red)':'var(--ink-soft)')+'">'+d+'</div>';
+      if(cnt>0){
+        inner+='<div style="display:flex;align-items:center;justify-content:center;gap:1px;flex-wrap:wrap;padding:2px 0">';
+        /* 最多显示3个小图标，超出显示+N */
+        const show=Math.min(cnt,3);
+        for(let s=0;s<show;s++) inner+='<span style="font-size:'+((cnt===1)?'18px':'14px')+';line-height:1">'+DRINK_ICON+'</span>';
+        if(cnt>3) inner+='<span style="font-size:9px;font-weight:700;color:var(--wood)">+'+(cnt-3)+'</span>';
+        inner+='</div>';
+        inner+='<div style="font-size:9px;font-weight:700;color:var(--green-dark)">'+cnt+'杯</div>';
+      } else {
+        inner+='<div style="opacity:.12;font-size:16px">·</div>';
+      }
+      h+='<div data-ds="'+ds+'" style="cursor:pointer;min-height:56px;border:2px solid '+(isT?'var(--gold)':(cnt>0?'#c9a86c':'var(--wood-light)'))+
+         ';border-radius:5px;background:'+(isT?'#fff6dd':(cnt>0?'#fff8ee':'#fffdf5'))+';padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;position:relative;overflow:hidden">'+
+         inner+'</div>';
+    }
+    h+='</div>';
+    /* 本月统计 */
+    const typeCount={};
+    DB.drinks.filter(x=>x.date.startsWith(y+'-'+pad(mo+1)+'-')).forEach(x=>{
+      (x.type||[]).forEach(t=>{ typeCount[t]=(typeCount[t]||0)+1; });
+    });
+    h+='<div class="divider"></div><div class="row" style="gap:7px;flex-wrap:wrap"><span class="muted">本月 '+monthTotal+' 杯 · </span>';
+    Object.keys(typeCount).sort((a,b)=>(typeCount[b]||0)-(typeCount[a]||0)).slice(0,6)
+      .forEach(k=>h+='<span class="chip">'+esc(k)+' '+typeCount[k]+' 杯</span>');
+    if(!Object.keys(typeCount).length) h+='<span class="muted">还没有记录</span>';
+    h+='</div></div>';
+    return h;
+  }
+
+  /* ===== 主渲染 ===== */
+  let h='';
+  h+='<div class="card"><div class="card-t">'+ico('cup','ico')+'饮料记录'+
     '<button class="btn pri" id="dAdd" style="margin-left:auto">＋ 记一杯</button></div>'+
-    '<div class="muted">按日期记录今天喝了什么，养成喝水好习惯 💧</div></div>';
+    '<div class="muted">按日期记录今天喝了什么 💧</div></div>';
+
+  /* 月历视图 */
+  h+=drinkCal();
+
+  /* 本周快览 */
+  const now=new Date();
+  const dayOfWeek=now.getDay(); // 0=周日
+  const weekStart=new Date(now); weekStart.setDate(now.getDate()-dayOfWeek);
+  let weekTotal=0;
+  let weekH='<div class="card"><div class="card-t">📊 本周饮水</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+  for(let wi=0;wi<7;wi++){
+    const wd=new Date(weekStart); wd.setDate(weekStart.getDate()+wi);
+    const wds=wd.getFullYear()+'-'+pad(wd.getMonth()+1)+'-'+pad(wd.getDate());
+    const wcnt=DB.drinks.filter(x=>x.date===wds).length;
+    weekTotal+=wcnt;
+    const isToday=wds===t;
+    weekH+='<div style="text-align:center;padding:5px 2px;border:2px solid '+(isToday?'var(--gold)':'var(--wood-light)')+
+      ';border-radius:5px;background:'+(isToday?'#fff6dd':'#fffdf5')+'">'+
+      '<div style="font-size:10px;font-weight:700;color:'+(isToday?'var(--red)':'var(--ink-soft)')+'">'+WK[wi].replace('周','')+'</div>'+
+      (wcnt>0?
+        '<div style="font-size:15px;margin:2px 0">'+DRINK_ICON+'</div>'+
+        '<div style="font-size:10px;font-weight:700;color:var(--green-dark)">'+wcnt+'杯</div>'
+      :'<div style="opacity:.12;font-size:12px;margin:2px 0">·</div>')+
+      '</div>';
+  }
+  weekH+='</div><div class="row" style="margin-top:7px"><span class="muted">本周共 '+weekTotal+' 杯</span>'+
+     '<span class="muted" style="margin-left:auto">💡 每天建议 8 杯水</span></div></div>';
+  h+=weekH;
+
+  /* 详细列表（按日期分组） */
   const byDate={};
   DB.drinks.slice().sort((a,b)=>b.ts-a.ts).forEach(x=>{ (byDate[x.date]=byDate[x.date]||[]).push(x); });
   const dates=Object.keys(byDate).sort().reverse();
   if(!dates.length) h+='<div class="card"><div class="empty"><span class="big">🥤</span>还没有饮料记录，今天喝了点什么？</div></div>';
-  dates.forEach((d,i)=>{
-    h+='<div class="fold'+(i===0?' open':'')+'"><div class="fold-h">📅 '+dLabel(d)+'<span class="chip" style="margin-left:6px">'+byDate[d].length+' 杯</span><span class="ar">▶</span></div><div class="fold-b"><div class="grid g2">';
-    byDate[d].forEach(x=>{
-      h+='<div class="card" style="margin:0;box-shadow:none">';
-      h+='<div class="row" style="align-items:flex-start"><b style="font-size:14.5px;flex:1">🥤 '+esc(x.name)+'</b>'+
-         '<button class="btn mini" data-de="'+x.id+'">编辑</button><button class="del" data-dx="'+x.id+'">×</button></div>';
-      if(x.type&&x.type.length) h+='<div class="row" style="gap:5px;margin-top:4px;flex-wrap:wrap">'+x.type.map(t=>'<span class="chip">'+esc(t)+'</span>').join('')+'</div>';
-      if(x.note) h+='<div style="margin-top:6px;white-space:pre-wrap;font-size:13px">'+esc(x.note)+'</div>';
-      h+='</div>';
+  else{
+    h+='<div class="card"><div class="card-t">📋 全部记录</div>';
+    dates.forEach((d,i)=>{
+      h+='<div class="fold'+(i===0?' open':'')+'"><div class="fold-h">📅 '+dLabel(d)+
+         '<span class="chip" style="margin-left:6px">'+byDate[d].length+' 杯</span><span class="ar">▶</span></div>'+
+         '<div class="fold-b"><div class="grid g2">';
+      byDate[d].forEach(x=>{
+        h+='<div class="card" style="margin:0;box-shadow:none">';
+        h+='<div class="row" style="align-items:flex-start"><b style="font-size:14.5px;flex:1">🥤 '+esc(x.name)+'</b>'+
+           '<button class="btn mini" data-de="'+x.id+'">编辑</button><button class="del" data-dx="'+x.id+'">×</button></div>';
+        if(x.type&&x.type.length) h+='<div class="row" style="gap:5px;margin-top:4px;flex-wrap:wrap">'+x.type.map(t=>'<span class="chip">'+esc(t)+'</span>').join('')+'</div>';
+        if(x.note) h+='<div style="margin-top:6px;white-space:pre-wrap;font-size:13px">'+esc(x.note)+'</div>';
+        h+='</div>';
+      });
+      h+='</div></div></div>';
     });
-    h+='</div></div></div>';
-  });
+    h+='</div>';
+  }
   $('#content').innerHTML=h+decoHTML();
   bindFolds();
+
+  /* 月历导航 */
+  $('#dcPrev').onclick=()=>{ dCal.m--; if(dCal.m<0){dCal.m=11;dCal.y--;} RENDER.drink(); };
+  $('#dcNext').onclick=()=>{ dCal.m++; if(dCal.m>11){dCal.m=0;dCal.y++;} RENDER.drink(); };
+  $('#dcToday').onclick=()=>{ const n=new Date(); dCal={y:n.getFullYear(),m:n.getMonth()}; RENDER.drink(); };
+  /* 点击月历某天 → 筛选到该天的记录并展开 */
+  $$('[data-ds]').forEach(el=>el.onclick=()=>{
+    const ds=el.dataset.ds;
+    /* 如果有当天的记录，滚动到列表对应位置 */
+    const fold=$$('.fold-h');
+    for(let f of fold){ if(f.textContent.includes(ds.slice(5))){ f.click(); setTimeout(()=>f.scrollIntoView({behavior:'smooth',block:'start'}),100); break; } }
+  });
+
   $('#dAdd').onclick=()=>drinkEdit(null);
   $$('[data-de]').forEach(b=>b.onclick=()=>drinkEdit(DB.drinks.find(x=>x.id===b.dataset.de)));
   $$('[data-dx]').forEach(b=>b.onclick=()=>{
