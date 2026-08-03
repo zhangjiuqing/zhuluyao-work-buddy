@@ -466,10 +466,10 @@ const ICONS = {
   '.noooooyyoooooon','.nnnnnnnnnnnnnn.','.noooooooooooon.','.noooooooooooon.',
   '.noooooooooooon.','..nnnnnnnnnnnn..','................','................']},
   cup:{pal:P,rows:[
-  '.......y........','.......y........','.....cccccc.....','....c......c....',
-  '....c.oooo.c....','....c.oooo.c....','....c.oooo.c....','....c.oooo.c....',
-  '....c.oooo.c....','....c.oooo.c....','....c.oooo.c....','....ccoooocc....',
-  '.....cccccc.....','......cccc......','.......cc.......','................']},
+  '................','................','.......tt.......','.......tt.......',
+  '..NNNNNNNNNNNN..','.NwwwwwwwwwwwwN.','.NwwwwwwwwwwwwN.','.NttttttttttttN.',
+  '.NttttttttttttN.','.Npp.kk..kk.ppN.','.NttttttttttttN.','.NnnnnnnnnnnnnN.',
+  '.NnnnNNnnNNnnnN.','..NNNNNNNNNNNN..','................','................']},
   envelope:{pal:P,rows:[
   '................','................','..rrrrrrrrrrrr..','.ryrrrrrrrrrryr.',
   '.ryrrrrrrrrrryr.','.ryryrrrrrrryyr.','.ryryryrrrrryyr.','.ryryyyyryyyyyr.',
@@ -1321,6 +1321,10 @@ RENDER.drink=function(){
   const t=today();
   let dCal={y:(new Date()).getFullYear(),m:(new Date()).getMonth()};
   const DRINK_ICON='🥤';
+  /* 取某日/某集合的"总杯数"（cups 累加，老数据无 cups 字段时按 1 算） */
+  const cupsOf=x=>Math.max(0,+(x.cups||1));
+  const dayCups=ds=>DB.drinks.filter(x=>x.date===ds).reduce((s,x)=>s+cupsOf(x),0);
+  const recOf=ds=>DB.drinks.filter(x=>x.date===ds).length;
   function drinkCal(){
     const y=dCal.y, mo=dCal.m;
     const first=new Date(y,mo,1), start=first.getDay(), days=new Date(y,mo+1,0).getDate();
@@ -1336,18 +1340,16 @@ RENDER.drink=function(){
     let monthTotal=0;
     for(let d=1;d<=days;d++){
       const ds=y+'-'+pad(mo+1)+'-'+pad(d);
-      const drinks=DB.drinks.filter(x=>x.date===ds);
-      const cnt=drinks.length;
+      const cnt=dayCups(ds);
+      const rec=recOf(ds);
       monthTotal+=cnt;
       const isT=ds===t;
-      /* 格子内显示杯数或图标 */
       let inner='<div style="font-size:10.5px;font-weight:800;color:'+(isT?'var(--red)':'var(--ink-soft)')+'">'+d+'</div>';
       if(cnt>0){
         inner+='<div style="display:flex;align-items:center;justify-content:center;gap:1px;flex-wrap:wrap;padding:2px 0">';
-        /* 最多显示3个小图标，超出显示+N */
-        const show=Math.min(cnt,3);
-        for(let s=0;s<show;s++) inner+='<span style="font-size:'+((cnt===1)?'18px':'14px')+';line-height:1">'+DRINK_ICON+'</span>';
-        if(cnt>3) inner+='<span style="font-size:9px;font-weight:700;color:var(--wood)">+'+(cnt-3)+'</span>';
+        const show=Math.min(rec,3);
+        for(let s=0;s<show;s++) inner+='<span style="font-size:'+((rec===1)?'18px':'14px')+';line-height:1">'+DRINK_ICON+'</span>';
+        if(rec>3) inner+='<span style="font-size:9px;font-weight:700;color:var(--wood)">+'+(rec-3)+'</span>';
         inner+='</div>';
         inner+='<div style="font-size:9px;font-weight:700;color:var(--green-dark)">'+cnt+'杯</div>';
       } else {
@@ -1361,7 +1363,8 @@ RENDER.drink=function(){
     /* 本月统计 */
     const typeCount={};
     DB.drinks.filter(x=>x.date.startsWith(y+'-'+pad(mo+1)+'-')).forEach(x=>{
-      (x.type||[]).forEach(t=>{ typeCount[t]=(typeCount[t]||0)+1; });
+      const c=cupsOf(x);
+      (x.type||[]).forEach(tp=>{ typeCount[tp]=(typeCount[tp]||0)+c; });
     });
     h+='<div class="divider"></div><div class="row" style="gap:7px;flex-wrap:wrap"><span class="muted">本月 '+monthTotal+' 杯 · </span>';
     Object.keys(typeCount).sort((a,b)=>(typeCount[b]||0)-(typeCount[a]||0)).slice(0,6)
@@ -1389,7 +1392,7 @@ RENDER.drink=function(){
   for(let wi=0;wi<7;wi++){
     const wd=new Date(weekStart); wd.setDate(weekStart.getDate()+wi);
     const wds=wd.getFullYear()+'-'+pad(wd.getMonth()+1)+'-'+pad(wd.getDate());
-    const wcnt=DB.drinks.filter(x=>x.date===wds).length;
+    const wcnt=dayCups(wds);
     weekTotal+=wcnt;
     const isToday=wds===t;
     weekH+='<div style="text-align:center;padding:5px 2px;border:2px solid '+(isToday?'var(--gold)':'var(--wood-light)')+
@@ -1413,12 +1416,14 @@ RENDER.drink=function(){
   else{
     h+='<div class="card"><div class="card-t">📋 全部记录</div>';
     dates.forEach((d,i)=>{
+      const dayTotal=byDate[d].reduce((s,x)=>s+cupsOf(x),0);
       h+='<div class="fold'+(i===0?' open':'')+'"><div class="fold-h">📅 '+dLabel(d)+
-         '<span class="chip" style="margin-left:6px">'+byDate[d].length+' 杯</span><span class="ar">▶</span></div>'+
+         '<span class="chip" style="margin-left:6px">'+dayTotal+' 杯</span><span class="ar">▶</span></div>'+
          '<div class="fold-b"><div class="grid g2">';
       byDate[d].forEach(x=>{
+        const c=cupsOf(x);
         h+='<div class="card" style="margin:0;box-shadow:none">';
-        h+='<div class="row" style="align-items:flex-start"><b style="font-size:14.5px;flex:1">🥤 '+esc(x.name)+'</b>'+
+        h+='<div class="row" style="align-items:flex-start"><b style="font-size:14.5px;flex:1">🥤 '+esc(x.name)+(c>1?' <span style="color:var(--wood);font-weight:700">× '+c+' 杯</span>':'')+'</b>'+
            '<button class="btn mini" data-de="'+x.id+'">编辑</button><button class="del" data-dx="'+x.id+'">×</button></div>';
         if(x.type&&x.type.length) h+='<div class="row" style="gap:5px;margin-top:4px;flex-wrap:wrap">'+x.type.map(t=>'<span class="chip">'+esc(t)+'</span>').join('')+'</div>';
         if(x.note) h+='<div style="margin-top:6px;white-space:pre-wrap;font-size:13px">'+esc(x.note)+'</div>';
@@ -1454,10 +1459,18 @@ RENDER.drink=function(){
 };
 function drinkEdit(x){
   const isNew=!x;
-  const d=x?JSON.parse(JSON.stringify(x)):{id:uid(),date:today(),name:'',type:[],note:'',ts:Date.now()};
+  const d=x?JSON.parse(JSON.stringify(x)):{id:uid(),date:today(),name:'',type:[],note:'',cups:1,ts:Date.now()};
+  if(!d.cups||d.cups<1) d.cups=1;
   modal('<h3>🥤 '+(isNew?'记一杯饮料':'编辑饮料')+'</h3>'+
-    '<div class="row" style="margin-bottom:8px"><input class="inp grow" id="dN" placeholder="喝了什么，比如「冰美式」" value="'+esc(d.name)+'" maxlength="30">'+
+    '<div class="row" style="margin-bottom:8px"><input class="inp grow" id="dN" placeholder="喝了什么，比如「红枣桂圆茶」" value="'+esc(d.name)+'" maxlength="30">'+
     '<input class="inp" id="dD" type="date" value="'+d.date+'" style="width:150px"></div>'+
+    '<div class="row" style="margin-bottom:9px;align-items:center;gap:6px">'+
+      '<span class="muted" style="margin-right:2px">杯数</span>'+
+      '<button class="btn sm" id="dCupsM" style="width:36px;padding:4px 0;font-size:18px;line-height:1">−</button>'+
+      '<input class="inp" id="dCups" type="number" min="1" max="99" value="'+d.cups+'" style="width:64px;text-align:center;font-weight:700;font-size:15px;padding:6px 4px">'+
+      '<button class="btn sm" id="dCupsP" style="width:36px;padding:4px 0;font-size:18px;line-height:1">+</button>'+
+      '<span class="muted" id="dCupsHint" style="margin-left:4px">共 '+d.cups+' 杯</span>'+
+    '</div>'+
     '<div class="muted" style="margin-bottom:5px">类型（可多选）</div>'+
     '<div class="row" style="gap:6px;margin-bottom:8px;flex-wrap:wrap">'+DRINK_TYPE.map(t=>'<button class="tagbtn'+(d.type.includes(t)?' on':'')+'" data-dt="'+esc(t)+'">'+t+'</button>').join('')+'</div>'+
     '<textarea class="ta" id="dX" placeholder="备注：甜度、温度、搭配、感受…" style="min-height:60px">'+esc(d.note)+'</textarea>'+
@@ -1468,12 +1481,19 @@ function drinkEdit(x){
       if(d.type.includes(t)) d.type=d.type.filter(z=>z!==t); else d.type.push(t);
       $$('[data-dt]',mo).forEach(z=>z.classList.toggle('on',d.type.includes(z.dataset.dt)));
     });
+    const cv=$('#dCups',mo), hint=$('#dCupsHint',mo);
+    const syncHint=()=>{ hint.textContent='共 '+(parseInt(cv.value)||1)+' 杯'; };
+    $('#dCupsM',mo).onclick=()=>{ cv.value=Math.max(1,(parseInt(cv.value)||1)-1); syncHint(); cv.focus(); };
+    $('#dCupsP',mo).onclick=()=>{ cv.value=Math.min(99,(parseInt(cv.value)||1)+1); syncHint(); cv.focus(); };
+    cv.oninput=syncHint;
+    cv.onblur=()=>{ cv.value=Math.max(1,Math.min(99,parseInt(cv.value)||1)); syncHint(); };
     $('#dC',mo).onclick=closeModal;
     $('#dS',mo).onclick=()=>{
       d.name=$('#dN',mo).value.trim()||'一杯饮料';
       d.note=$('#dX',mo).value; d.date=$('#dD',mo).value||today();
+      d.cups=Math.max(1,Math.min(99,parseInt($('#dCups',mo).value)||1));
       if(isNew) DB.drinks.push(d); else DB.drinks[DB.drinks.findIndex(z=>z.id===d.id)]=d;
-      save(); closeModal(); RENDER.drink(); toast('已保存 💧');
+      save(); closeModal(); RENDER.drink(); toast('已保存 💧 × '+d.cups);
     };
   });
 }
