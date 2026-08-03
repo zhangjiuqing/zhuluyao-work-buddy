@@ -1933,7 +1933,7 @@ function stRender(tab){
     };
   }
   else if(tab==='data'){
-    box.innerHTML='<div id="stStat" class="px-in" style="padding:10px;margin-bottom:10px">统计中…</div>'+
+    box.innerHTML='<div class="px-in" style="padding:9px;margin-bottom:10px;border:2px solid var(--gold);background:#fff6dd;line-height:1.7;font-size:13px"><b>⚠️ 重装会清空数据：</b>只有<b>换桌面图标</b>才需要删掉主屏图标重装。重装会清空全部记录——<b>重装前请先点「导出完整备份」</b>。平时更新功能用「关于」页的「检查更新」即可，不丢数据。</div><div id="stStat" class="px-in" style="padding:10px;margin-bottom:10px">统计中…</div>'+
       '<div class="row" style="gap:7px">'+
       '<button class="btn pri" id="dxFull">💾 导出完整备份</button>'+
       '<button class="btn" id="dxText">📄 仅导出文字数据</button>'+
@@ -2010,7 +2010,17 @@ function stRender(tab){
       '<b>🔒 数据在哪</b><br>全部保存在你当前这台设备的浏览器里（localStorage + IndexedDB），不上传任何服务器。<br>'+
       '<span class="muted">注意：换设备、换浏览器、清除浏览器数据都会导致数据不互通，请用「数据备份」页导出。</span>'+
       '<div class="divider"></div>'+
-      '<span class="muted">地图服务：腾讯位置服务　·　像素素材：手绘 SVG</span></div>';
+      '<span class="muted">地图服务：腾讯位置服务　·　像素素材：手绘 SVG</span></div>'+
+      '<div class="divider"></div>'+
+      '<button class="btn sky" id="stUpdate" style="width:100%">🔄 检查更新并刷新</button>'+
+      '<div class="muted" style="margin-top:8px;line-height:1.7">'+
+      '我加好新功能推上去后，点这里即可更新，<b>不用删掉重装</b>，数据不会丢。<br>'+
+      '只有换桌面图标才需删掉重装——<b>重装前务必先到「数据备份」导出备份</b>。</div>';
+    const ub=$('#stUpdate',box); if(ub) ub.onclick=()=>{
+      toast('正在检查更新…');
+      try{ if('serviceWorker' in navigator){ navigator.serviceWorker.getRegistration().then(r=>{ if(r) r.update(); }); } }catch(e){}
+      setTimeout(()=>location.reload(),700);
+    };
   }
 }
 function downloadJSON(obj,name){
