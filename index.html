@@ -469,7 +469,12 @@ const ICONS = {
   '.......y........','.......y........','.....cccccc.....','....c......c....',
   '....c.oooo.c....','....c.oooo.c....','....c.oooo.c....','....c.oooo.c....',
   '....c.oooo.c....','....c.oooo.c....','....c.oooo.c....','....ccoooocc....',
-  '.....cccccc.....','......cccc......','.......cc.......','................']}
+  '.....cccccc.....','......cccc......','.......cc.......','................']},
+  envelope:{pal:P,rows:[
+  '................','................','..rrrrrrrrrrrr..','.ryrrrrrrrrrryr.',
+  '.ryrrrrrrrrrryr.','.ryryrrrrrrryyr.','.ryryryrrrrryyr.','.ryryyyyryyyyyr.',
+  '.ryryrrrrrrryyr.','.ryrrrrrrrrrryr.','.rrrrrrrrrrrrrr.','..rrrrrrrrrrrr..',
+  '................','................','................','................']}
 };
 function ico(name,cls){ return ICONS[name]?svgIcon(ICONS[name],cls):''; }
 
@@ -552,6 +557,7 @@ const DEFAULT_MODULES=[
   {id:'life',name:'生活专区',icon:'house',on:true,children:[
     {id:'food',  name:'美食',    icon:'egg',on:true},
     {id:'drink', name:'饮料记录',icon:'cup',on:true},
+    {id:'gift',  name:'人情往来',icon:'envelope',on:true},
     {id:'movie', name:'影视登记',icon:'tv', on:true}
   ]}
 ];
@@ -567,6 +573,7 @@ function blankDB(){
     weights:[],      // {date,kg}
     foods:[],        // {id,date,name,place,imgs[],auds[],mood,note}
     drinks:[],       // {id,date,name,type[],note,ts}
+    gifts:[],        // {id,date,name,relation,event,amount,direction,note,ts,returned,remindDate}
     movies:[]        // {id,title,type,date,rate,review,poster}
   };
 }
@@ -591,7 +598,7 @@ function migrate(d){
   out.cfg.modules.forEach(m=>{
     if(m.children) m.children=m.children.filter(c=>c.id!=='travel');
   });
-  ['memos','sports','weights','foods','drinks','movies','presets'].forEach(k=>{ if(!Array.isArray(out[k])) out[k]=b[k]; });
+  ['memos','sports','weights','foods','drinks','gifts','movies','presets'].forEach(k=>{ if(!Array.isArray(out[k])) out[k]=b[k]; });
   if(!out.tasks||typeof out.tasks!=='object') out.tasks={};
   if(!out.mood||typeof out.mood!=='object') out.mood={};
   if(!out.cfg.folded||typeof out.cfg.folded!=='object') out.cfg.folded={};
@@ -1467,6 +1474,220 @@ function drinkEdit(x){
       d.note=$('#dX',mo).value; d.date=$('#dD',mo).value||today();
       if(isNew) DB.drinks.push(d); else DB.drinks[DB.drinks.findIndex(z=>z.id===d.id)]=d;
       save(); closeModal(); RENDER.drink(); toast('已保存 💧');
+    };
+  });
+}
+
+/* ==================================================================
+   ⑥ 人情往来（红包簿 · 收支记账 + 待还提醒）
+   ================================================================== */
+const GIFT_REL=['亲戚','朋友','同事','同学','邻居','其他'];
+const GIFT_EVT=['婚礼','满月酒','乔迁','升学','白事','生日','节日','其他'];
+let giftView='list', giftYear='', giftEvent='all';
+
+RENDER.gift=function(){
+  const yNow=new Date().getFullYear();
+  if(!giftYear) giftYear=String(yNow);
+  function statBy(year,evt){
+    let o=0,ot=0,ii=0,it=0,pending=[];
+    const byEv={}, byP={};
+    DB.gifts.forEach(g=>{
+      if(year && g.date.slice(0,4)!==year) return;
+      if(evt!=='all' && g.event!==evt) return;
+      const a=+(g.amount||0);
+      if(g.direction==='out'){ o+=a; ot++; } else { ii+=a; it++; }
+      byEv[g.event]=(byEv[g.event]||0)+a;
+      if(!byP[g.name]) byP[g.name]={out:0,inn:0,rel:g.relation||'',done:0,pend:0,last:''};
+      if(g.direction==='out') byP[g.name].out+=a; else byP[g.name].inn+=a;
+      if(g.direction==='in' && !g.returned) byP[g.name].pend++; else byP[g.name].done++;
+      if(!byP[g.name].last || g.date>byP[g.name].last) byP[g.name].last=g.date;
+      if(g.direction==='in' && !g.returned) pending.push(g);
+    });
+    return {o,ot,ii,it,byEv,byP,pending};
+  }
+  const s=statBy(giftYear,giftEvent);
+
+  let h='';
+  h+='<div class="card"><div class="card-t">'+ico('envelope','ico')+'人情往来'+
+     '<button class="btn pri" id="gAdd" style="margin-left:auto">＋ 记一笔</button></div>'+
+     '<div class="muted">记录红包收支、标记待还人情，年终一目了然 🎁</div></div>';
+
+  /* 概览 */
+  h+='<div class="card"><div class="card-t">📊 '+giftYear+' 年概览</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'+
+     '<div style="padding:12px;background:#fff6f0;border:2px solid #e8a98a;border-radius:6px;text-align:center">'+
+     '<div style="font-size:11px;color:var(--ink-soft);margin-bottom:3px">🔴 今年送出</div>'+
+     '<div style="font-size:18px;font-weight:800;color:#c9432f">¥'+(s.o||0).toLocaleString('zh-CN')+'</div>'+
+     '<div style="font-size:11px;color:var(--ink-soft);margin-top:2px">'+s.ot+' 笔</div></div>'+
+     '<div style="padding:12px;background:#fff8ec;border:2px solid #e8c66e;border-radius:6px;text-align:center">'+
+     '<div style="font-size:11px;color:var(--ink-soft);margin-bottom:3px">🟡 今年收到</div>'+
+     '<div style="font-size:18px;font-weight:800;color:var(--gold)">¥'+(s.ii||0).toLocaleString('zh-CN')+'</div>'+
+     '<div style="font-size:11px;color:var(--ink-soft);margin-top:2px">'+s.it+' 笔</div></div></div>';
+  h+='<div class="row" style="gap:7px;flex-wrap:wrap">'+
+     '<span class="chip">差额 '+(s.ii-s.o>=0?'多收':'多出')+' ¥'+Math.abs(s.ii-s.o).toLocaleString('zh-CN')+'</span>'+
+     '<span class="chip" style="border-color:'+(s.pending.length?'#d1533f':'var(--wood-light)')+'">⚠️ 待还人情 '+s.pending.length+' 笔</span>'+
+     '</div></div>';
+
+  /* 待还提醒区 */
+  if(s.pending.length){
+    h+='<div class="card"><div class="card-t">⚠️ 待还人情（收到但还没回）</div>';
+    s.pending.slice().sort((a,b)=>(a.remindDate||a.date).localeCompare(b.remindDate||b.date)).forEach(g=>{
+      const overdue=g.remindDate && g.remindDate<t;
+      h+='<div class="task" style="background:'+(overdue?'#fff0e8':'#fffdf5')+'">'+
+         '<div style="flex:1"><div style="font-weight:700;font-size:14px">'+esc(g.name)+
+         (g.relation?' <span class="muted" style="font-weight:400">· '+esc(g.relation)+'</span>':'')+'</div>'+
+         '<div class="muted" style="font-size:11.5px;margin-top:2px">'+
+         esc(g.event||'')+(g.date?' · '+esc(g.date.slice(5)):'')+
+         (g.remindDate?' · ⏰ 提醒 '+esc(g.remindDate.slice(5))+(overdue?'（已过期）':''):'')+'</div></div>'+
+         '<div style="font-weight:800;color:var(--gold);font-size:14px;margin-right:8px">¥'+(+(g.amount||0)).toLocaleString('zh-CN')+'</div>'+
+         '<button class="btn mini" data-gx="'+g.id+'">✓ 已还</button></div>';
+    });
+    h+='</div>';
+  }
+
+  /* 筛选条 */
+  h+='<div class="card"><div class="row" style="gap:6px;flex-wrap:wrap">'+
+     '<span class="muted">年份：</span>'+
+     [String(yNow),String(yNow-1),String(yNow-2),''].map(y=>'<button class="tagbtn'+(giftYear===y?' on':'')+'" data-gy="'+y+'">'+(y||'全部')+'</button>').join('')+
+     '<span class="muted" style="margin-left:auto">事件：</span>'+
+     '<button class="tagbtn'+(giftEvent==='all'?' on':'')+'" data-ge="all">全部</button>'+
+     GIFT_EVT.map(e=>'<button class="tagbtn'+(giftEvent===e?' on':'')+'" data-ge="'+e+'">'+e+'</button>').join('')+
+     '</div>';
+
+  /* 视图切换 */
+  h+='<div class="row" style="margin-top:8px"><button class="btn sm'+(giftView==='list'?' pri':'')+'" id="gVList">📋 明细</button>'+
+     '<button class="btn sm'+(giftView==='stats'?' pri':'')+'" id="gVStat">📈 统计</button></div>';
+
+  if(giftView==='stats'){
+    /* 按人统计 */
+    const persons=Object.keys(s.byP);
+    if(persons.length){
+      h+='<div class="divider"></div><div style="font-weight:800;margin-bottom:7px">👥 按人统计</div>'+
+         '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'+
+         '<tr style="background:var(--parch-2)"><th style="padding:6px;text-align:left">姓名</th><th style="padding:6px">关系</th>'+
+         '<th style="padding:6px;text-align:right">送出</th><th style="padding:6px;text-align:right">收到</th>'+
+         '<th style="padding:6px">状态</th></tr>';
+      persons.sort((a,b)=>(s.byP[b].out+s.byP[b].inn)-(s.byP[a].out+s.byP[a].inn)).forEach(p=>{
+        const v=s.byP[p];
+        h+='<tr style="border-bottom:1px dashed var(--parch-3)">'+
+           '<td style="padding:6px;font-weight:700">'+esc(p)+'</td>'+
+           '<td style="padding:6px;text-align:center;color:var(--ink-soft)">'+esc(v.rel||'-')+'</td>'+
+           '<td style="padding:6px;text-align:right;color:#c9432f">'+(v.out?('¥'+v.out.toLocaleString('zh-CN')):'-')+'</td>'+
+           '<td style="padding:6px;text-align:right;color:var(--gold)">'+(v.inn?('¥'+v.inn.toLocaleString('zh-CN')):'-')+'</td>'+
+           '<td style="padding:6px;text-align:center;font-size:11px">'+
+           (v.pend?'<span style="color:#c9432f">⚠️ '+v.pend+' 待还</span>':'<span class="muted">✓ '+v.done+' 已还</span>')+'</td></tr>';
+      });
+      h+='</table></div>';
+    }
+    /* 按事件统计 */
+    const evts=Object.keys(s.byEv);
+    if(evts.length){
+      h+='<div class="divider"></div><div style="font-weight:800;margin-bottom:7px">🎉 按事件统计</div>'+
+         '<div class="row" style="gap:6px;flex-wrap:wrap">';
+      evts.sort((a,b)=>s.byEv[b]-s.byEv[a]).forEach(e=>{
+        h+='<span class="chip">'+esc(e)+' ¥'+s.byEv[e].toLocaleString('zh-CN')+'</span>';
+      });
+      h+='</div>';
+    }
+    h+='</div>';
+  } else {
+    /* 明细列表（按日期倒序） */
+    let list=DB.gifts.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.ts-a.ts);
+    if(giftYear) list=list.filter(g=>g.date.slice(0,4)===giftYear);
+    if(giftEvent!=='all') list=list.filter(g=>g.event===giftEvent);
+    if(!list.length) h+='<div class="empty" style="margin-top:14px"><span class="big">🧧</span>没有记录</div>';
+    else{
+      h+='<div class="divider"></div>';
+      list.forEach(g=>{
+        const isIn=g.direction==='in';
+        h+='<div class="task" style="align-items:flex-start"><div style="flex:1;min-width:0">'+
+           '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">'+
+           '<b style="font-size:14.5px">'+(isIn?'🟡':'🔴')+' '+esc(g.name)+'</b>'+
+           '<span class="chip">'+esc(g.event||'')+'</span>'+
+           (g.relation?'<span class="chip">'+esc(g.relation)+'</span>':'')+
+           (g.returned?'<span class="chip" style="border-color:var(--green);color:var(--green-dark)">✓ 已还</span>':
+             (isIn?'<span class="chip" style="border-color:#d1533f;color:#c9432f">⚠️ 待还</span>':''))+
+           '</div>'+
+           '<div class="muted" style="font-size:11.5px;margin-top:3px">'+
+           esc(g.date)+(g.remindDate?' · ⏰ '+esc(g.remindDate.slice(5)):'')+
+           (g.note?' · '+esc(g.note):'')+'</div></div>'+
+           '<div style="font-weight:800;font-size:15px;color:'+(isIn?'var(--gold)':'#c9432f')+';margin:0 8px">'+
+           (isIn?'+':'-')+'¥'+(+(g.amount||0)).toLocaleString('zh-CN')+'</div>'+
+           '<div style="display:flex;flex-direction:column;gap:3px">'+
+           '<button class="btn mini" data-ge2="'+g.id+'">编辑</button>'+
+           '<button class="del" data-gd="'+g.id+'">×</button></div></div>';
+      });
+    }
+    h+='</div>';
+  }
+
+  $('#content').innerHTML=h+decoHTML();
+
+  /* 事件绑定 */
+  $('#gAdd').onclick=()=>giftEdit(null);
+  $$('[data-gy]').forEach(b=>b.onclick=()=>{ giftYear=b.dataset.gy; RENDER.gift(); });
+  $$('[data-ge]').forEach(b=>b.onclick=()=>{ giftEvent=b.dataset.ge; RENDER.gift(); });
+  $('#gVList').onclick=()=>{ giftView='list'; RENDER.gift(); };
+  $('#gVStat').onclick=()=>{ giftView='stats'; RENDER.gift(); };
+  $$('[data-ge2]').forEach(b=>b.onclick=()=>giftEdit(DB.gifts.find(x=>x.id===b.dataset.ge2)));
+  $$('[data-gd]').forEach(b=>b.onclick=()=>{
+    const g=DB.gifts.find(x=>x.id===b.dataset.gd);
+    confirmBox('删除记录','确定删除「'+esc(g.name)+' · '+esc(g.event||'')+'」？',()=>{
+      DB.gifts=DB.gifts.filter(x=>x.id!==b.dataset.gd); save(); RENDER.gift(); toast('已删除');
+    });
+  });
+  /* 待还区一键标记已还 */
+  $$('[data-gx]').forEach(b=>b.onclick=()=>{
+    const g=DB.gifts.find(x=>x.id===b.dataset.gx); if(!g) return;
+    g.returned=true; save(); RENDER.gift(); toast('已标记为「已还」 🎉');
+  });
+};
+
+function giftEdit(x){
+  const isNew=!x;
+  const d=x?JSON.parse(JSON.stringify(x)):{id:uid(),date:today(),name:'',relation:GIFT_REL[0],event:GIFT_EVT[0],amount:'',direction:'out',note:'',ts:Date.now(),returned:false,remindDate:''};
+  modal('<h3>🧧 '+(isNew?'记一笔人情':'编辑人情')+'</h3>'+
+    '<div class="row" style="margin-bottom:8px"><input class="inp grow" id="gN" placeholder="对方姓名" value="'+esc(d.name)+'" maxlength="20">'+
+    '<input class="inp" id="gD" type="date" value="'+d.date+'" style="width:150px"></div>'+
+    '<div class="muted" style="margin-bottom:5px">方向 / 关系 / 事件</div>'+
+    '<div class="row" style="gap:5px;margin-bottom:7px">'+
+      ['out','in'].map(v=>'<button class="tagbtn'+(d.direction===v?' on':'')+'" data-gd="'+v+'" style="flex:1">'+(v==='out'?'🔴 随出去':'🟡 收到')+'</button>').join('')+
+      '<select class="inp" id="gR" style="flex:1.2"><option value=""></option>'+
+      GIFT_REL.map(r=>'<option'+(d.relation===r?' selected':'')+'>'+r+'</option>').join('')+
+      '</select>'+
+      '<select class="inp" id="gE" style="flex:1.2">'+
+      GIFT_EVT.map(e=>'<option'+(d.event===e?' selected':'')+'>'+e+'</option>').join('')+
+      '</select></div>'+
+    '<div class="row" style="margin-bottom:8px"><input class="inp grow" id="gA" type="number" min="0" step="1" placeholder="金额（元）" value="'+(d.amount||'')+'">'+
+    '<input class="inp" id="gRm" type="date" placeholder="提醒日期" value="'+(d.remindDate||'')+'" style="width:160px"></div>'+
+    '<textarea class="ta" id="gX" placeholder="备注…" style="min-height:50px">'+esc(d.note)+'</textarea>'+
+    (d.direction==='in'?'<div class="row" style="margin-top:7px"><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">'+
+       '<input type="checkbox" id="gRt"'+(d.returned?' checked':'')+'> 已还回（收到后已回礼）</label></div>':'')+
+    '<div class="foot"><button class="btn" id="gC">取消</button><button class="btn pri" id="gS">保存</button></div>',
+  mo=>{
+    let dir=d.direction;
+    $$('[data-gd]',mo).forEach(b=>b.onclick=()=>{
+      dir=b.dataset.gd;
+      $$('[data-gd]',mo).forEach(x=>x.classList.toggle('on',x===b));
+      /* 切换方向时刷新已还复选框显示 */
+      const f=mo.querySelector('#gRt'); if(f){
+        let box=f.parentNode; box.style.display=dir==='in'?'':'none';
+      }
+    });
+    $('#gC',mo).onclick=closeModal;
+    $('#gS',mo).onclick=()=>{
+      const name=$('#gN',mo).value.trim();
+      if(!name){toast('填一下对方姓名');return;}
+      const amt=$('#gA',mo).value.trim();
+      if(!amt||+amt<0){toast('填一下金额');return;}
+      d.name=name; d.date=$('#gD',mo).value||today();
+      d.relation=$('#gR',mo).value; d.event=$('#gE',mo).value;
+      d.amount=+amt; d.direction=dir;
+      d.note=$('#gX',mo).value;
+      d.remindDate=$('#gRm',mo).value;
+      const rt=mo.querySelector('#gRt'); d.returned=rt?rt.checked:false;
+      if(isNew) DB.gifts.push(d); else DB.gifts[DB.gifts.findIndex(z=>z.id===d.id)]=d;
+      save(); closeModal(); RENDER.gift(); toast('已保存 🧧');
     };
   });
 }
